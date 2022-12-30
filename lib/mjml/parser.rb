@@ -19,11 +19,14 @@ module Mjml
     #
     # @return [String]
     def render
+      input.gsub!(/<!--mj-raw$(.*?)^mj-raw-->/m, "") # Prevent injection
+      input.gsub!(/<mj-raw>(.*?)<\/mj-raw>/m, "<!--mj-raw\n\\+\nmj-raw-->")
       in_tmp_file = Tempfile.open(['in', '.mjml']) do |file|
         file.write(input)
         file # return tempfile from block so #unlink works later
       end
-      run(in_tmp_file.path, Mjml.beautify, Mjml.minify, Mjml.validation_level)
+      output = run(in_tmp_file.path, Mjml.beautify, Mjml.minify, Mjml.validation_level)
+      output.gsub(/<!--mj-raw$(.*?)^mj-raw-->/m, "\\+")
     rescue StandardError
       raise if Mjml.raise_render_exception
 

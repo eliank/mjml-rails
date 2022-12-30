@@ -19,12 +19,14 @@ module Mjml
     #
     # @return [String]
     def render
-      input.gsub!(/<!--mj-raw$(.*?)^mj-raw-->/m, "") # Prevent injection
+      input.gsub!(/<!--mj-raw$.*?^mj-raw-->/m, "") # Prevent injection
       input.gsub!(/<mj-raw>(.*?)<\/mj-raw>/m, "<!--mj-raw\n\\+\nmj-raw-->")
+
       in_tmp_file = Tempfile.open(['in', '.mjml']) do |file|
         file.write(input)
         file # return tempfile from block so #unlink works later
       end
+
       output = run(in_tmp_file.path, Mjml.beautify, Mjml.minify, Mjml.validation_level)
       output.gsub(/<!--mj-raw$(.*?)^mj-raw-->/m, "\\+")
     rescue StandardError
@@ -40,7 +42,6 @@ module Mjml
     # @return [String] The result as string
     # rubocop:disable Style/OptionalBooleanParameter: Fixing this offense would imply a change in the public API.
     def run(in_tmp_file, beautify = true, minify = false, validation_level = 'strict')
-      # Tempfile.create(['out', '.html']) do |out_tmp_file|
       command = "#{in_tmp_file} render"
       stdout, stderr, status = Mjml.run_mjml(command)
 
